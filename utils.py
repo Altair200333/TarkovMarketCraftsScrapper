@@ -2,6 +2,7 @@ import time
 import re
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
 SCROLL_PAUSE_TIME = 0.5
 
@@ -121,3 +122,32 @@ def get_recipe(recipe):
                 craft_recipe.result = craft_item
 
     return craft_recipe
+
+
+def link_name(link):
+    return link.split('/')[-1]
+
+
+def get_df(crafts):
+    incomes = []
+    incomes_h = []
+    names = []
+
+    for craft in crafts:
+        components_price = 0
+        for item in craft.items:
+            components_price += item.price * item.count
+
+        sell_price = (craft.result.price - craft.result.fee) * craft.result.count
+        income = sell_price - components_price
+        income_h = income / craft.time
+        incomes.append(income)
+        incomes_h.append(income_h)
+        names.append(link_name(craft.result.link))
+
+        # print(income, income_h, link_name(craft.result.link),  craft.result.count)
+
+    data = {'Name': names, 'income': incomes, 'income/h': incomes_h}
+
+    df = pd.DataFrame(data).sort_values(by=['income/h'], ascending=False)
+    return df
